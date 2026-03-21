@@ -264,9 +264,9 @@ margin-top:8px;}
   margin: 0 auto;
 }
 
-.section-header { margin-bottom: 1.75rem; }
+.section-header { margin-bottom: 1.85rem; }
 .section-header h2 { font-size: 1.4rem; font-weight: 700; }
-.section-header p  { font-size: .88rem; color: var(--muted); margin-top: .25rem; }
+.section-header p  { font-size: .88rem; color: var(--muted); margin-top: .35rem; }
 
 /* ─── Card ─── */
 .card {
