@@ -585,6 +585,9 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
   gap: .5rem;
   margin-top: .5rem;
 }
+.patient-profile-actions {
+  margin-left: auto;
+}
 .pill {
   padding: .2rem .6rem;
   border-radius: 999px;
@@ -695,6 +698,10 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
   align-items: center;
   gap: .35rem;
   cursor: pointer;
+}
+
+#patient-editor-modal {
+  background: rgba(15, 23, 42, .35);
 }
 .search-wrap { position: relative; flex: 1; }
 .search-wrap svg { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--muted-lt); pointer-events: none; }
