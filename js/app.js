@@ -107,7 +107,9 @@ const sections = {
     document.getElementById('step-summary').classList.add('hidden');
     document.getElementById('patient-name').value = '';
     document.getElementById('consult-type').value = '';
-    document.getElementById('transcript-area').innerHTML = '<p class="transcript-placeholder" id="transcript-placeholder">Inicie a gravação para ver a transcrição em tempo real...</p>';
+    const anam = document.getElementById('anamnesis-context');
+    if (anam) anam.value = '';
+    document.getElementById('transcript-area').innerHTML = '<p class="transcript-placeholder" id="transcript-placeholder">Inicie a gravação para ver a transcrição em tempo real…</p>';
     document.getElementById('transcript-badge').textContent = '0 falas';
     document.getElementById('btn-gerar').disabled = true;
     RecordingState.reset();
@@ -167,7 +169,7 @@ const sections = {
           <div class="consult-reason">${c.type}</div>
         </div>
         <div class="consult-meta">
-          <span class="badge badge-green">Concluída</span>
+          <span class="badge badge-pronto">Pronto</span>
           <span class="consult-time">${formatRelTime(c.date)}</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted-lt)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
         </div>
@@ -320,7 +322,7 @@ const sections = {
           <div class="patient-trend-label">Pressão arterial (12 meses)</div>
           <div class="patient-trend-value">Média 12x8</div>
           <svg class="patient-trend-chart" viewBox="0 0 100 36" preserveAspectRatio="none">
-            <polyline fill="none" stroke="#2563EB" stroke-width="2"
+            <polyline fill="none" stroke="#2D5C3F" stroke-width="2"
               points="${buildSparklinePoints(mockPressure, 100, 30, 120, 130)}" />
           </svg>
         </div>
@@ -330,7 +332,7 @@ const sections = {
             latestWeight ? `${latestWeight.toFixed(1)} kg` : 'Sem histórico'
           }</div>
           <svg class="patient-trend-chart" viewBox="0 0 100 36" preserveAspectRatio="none">
-            <polyline fill="none" stroke="#10B981" stroke-width="2"
+            <polyline fill="none" stroke="#C68B2F" stroke-width="2"
               points="${
                 weightHistory.length
                   ? buildSparklinePoints(
@@ -358,7 +360,7 @@ const sections = {
                         1
                       )}" cy="${y.toFixed(
                         1
-                      )}" r="2.3" fill="#10B981" data-weight="${w.weight.toFixed(
+                      )}" r="2.3" fill="#C68B2F" data-weight="${w.weight.toFixed(
                         1
                       )} kg" />`;
                     })
@@ -371,7 +373,7 @@ const sections = {
           <div class="patient-trend-label">Hemoglobina glicada (A1c)</div>
           <div class="patient-trend-value">Estável</div>
           <svg class="patient-trend-chart" viewBox="0 0 100 36" preserveAspectRatio="none">
-            <polyline fill="none" stroke="#F59E0B" stroke-width="2"
+            <polyline fill="none" stroke="#6B7A6D" stroke-width="2"
               points="${buildSparklinePoints(mockA1c, 100, 30, 5.2, 5.8)}" />
           </svg>
         </div>

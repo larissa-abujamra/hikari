@@ -7,24 +7,92 @@ const RecordingState = {
   transcriptLines: [],
   lineIndex: 0,
   currentDemoScript: [],
+  detectionSeen: new Set(),
 
   reset() {
     this.isRecording = false;
     this.startTime = null;
     this.transcriptLines = [];
     this.lineIndex = 0;
+    this.detectionSeen = new Set();
     clearInterval(this.timerInterval);
     clearInterval(this.transcriptInterval);
     this.timerInterval = null;
     this.transcriptInterval = null;
-    // Reset UI
     document.getElementById('btn-start-rec').classList.remove('recording');
-    document.getElementById('btn-start-label').textContent = 'Iniciar Gravação';
+    document.getElementById('btn-start-label').textContent = 'Iniciar gravação';
     document.getElementById('btn-start-rec').disabled = false;
     document.getElementById('btn-stop-rec').disabled = true;
     document.getElementById('rec-status').classList.add('hidden');
+    resetRecordingSidePanels();
   }
 };
+
+const SPEECH_DETECTION_RULES = [
+  { re: /\b(alergia|alérgic|hipersensibilidade)\b/i, text: 'Possível menção a alergia ou hipersensibilidade.' },
+  { re: /\b(medicamento|remédio|comprimido|mg\b|ml\b)\b/i, text: 'Uso de medicamento citado na consulta.' },
+  { re: /\b(dor|latejando|queimação|náusea|vômito)\b/i, text: 'Sintoma referido (dor ou desconforto GI/neurológico).' },
+  { re: /\b(pressão|hipertens|diabetes|glicemia)\b/i, text: 'Condição crônica ou sinal vital mencionado.' },
+  { re: /\b(exame|ultrassom|raio-x|hemograma|sangue)\b/i, text: 'Pedido ou resultado de exame mencionado.' },
+  { re: /\b(retorno|voltar|semanas?|dias?)\b/i, text: 'Janela de retorno ou seguimento citada na conversa.' }
+];
+
+function resetRecordingSidePanels() {
+  const cidEl = document.getElementById('cid-suggested-panel');
+  const detEl = document.getElementById('speech-detections');
+  if (cidEl) {
+    cidEl.innerHTML =
+      '<li class="cid-panel-item" style="opacity:.75;font-size:13px">Inicie a gravação para ver sugestões contextuais.</li>';
+  }
+  if (detEl) {
+    detEl.innerHTML =
+      '<li style="color:var(--text-secondary);font-size:13px">Alergias, medicamentos e sintomas citados aparecerão aqui.</li>';
+  }
+}
+
+function renderCidSuggestedPanel(type) {
+  const cidEl = document.getElementById('cid-suggested-panel');
+  if (!cidEl) return;
+  const list = typeof getSuggestedCidsForSession === 'function' ? getSuggestedCidsForSession(type) : [];
+  if (!list.length) {
+    cidEl.innerHTML =
+      '<li class="cid-panel-item" style="opacity:.75;font-size:13px">Nenhuma sugestão automática para este motivo.</li>';
+    return;
+  }
+  cidEl.innerHTML = list
+    .map(
+      c => `<li class="cid-panel-item"><code>${escapeHtml(c.code)}</code> ${escapeHtml(c.desc)}</li>`
+    )
+    .join('');
+}
+
+function appendSpeechDetectionsFromLine(line) {
+  const detEl = document.getElementById('speech-detections');
+  if (!detEl || !line || !line.text) return;
+  const hay = line.text;
+  const speaker = (line.speaker || '').toLowerCase();
+  for (const rule of SPEECH_DETECTION_RULES) {
+    if (!rule.re.test(hay)) continue;
+    const key = rule.text;
+    if (RecordingState.detectionSeen.has(key)) continue;
+    RecordingState.detectionSeen.add(key);
+    if (detEl.querySelector('li[style*="text-secondary"]')) {
+      detEl.innerHTML = '';
+    }
+    const li = document.createElement('li');
+    li.textContent = `${rule.text} (${speaker === 'paciente' ? 'paciente' : 'equipe'})`;
+    detEl.appendChild(li);
+  }
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ─── Start recording ───
 document.getElementById('btn-start-rec').addEventListener('click', () => {
@@ -34,29 +102,30 @@ document.getElementById('btn-start-rec').addEventListener('click', () => {
   RecordingState.startTime = Date.now();
   RecordingState.lineIndex = 0;
   RecordingState.transcriptLines = [];
+  RecordingState.detectionSeen = new Set();
 
-  // Get demo script for current consultation type
   const type = document.getElementById('consult-type').value || 'default';
   RecordingState.currentDemoScript = getDemoTranscript(type);
 
-  // UI
+  renderCidSuggestedPanel(type);
+
   const btnStart = document.getElementById('btn-start-rec');
-  const btnStop  = document.getElementById('btn-stop-rec');
+  const btnStop = document.getElementById('btn-stop-rec');
   btnStart.classList.add('recording');
-  document.getElementById('btn-start-label').textContent = 'Gravando...';
+  document.getElementById('btn-start-label').textContent = 'Gravando…';
   btnStart.disabled = true;
   btnStop.disabled = false;
   document.getElementById('rec-status').classList.remove('hidden');
 
-  // Clear placeholder
   const area = document.getElementById('transcript-area');
   area.innerHTML = '';
 
-  // Start timer
+  const detEl = document.getElementById('speech-detections');
+  if (detEl) detEl.innerHTML = '';
+
   RecordingState.timerInterval = setInterval(updateTimer, 1000);
 
-  // Simulate live transcription — one line every ~3.5s
-  appendTranscriptLine(); // first line immediately
+  appendTranscriptLine();
   RecordingState.transcriptInterval = setInterval(() => {
     if (RecordingState.lineIndex < RecordingState.currentDemoScript.length) {
       appendTranscriptLine();
@@ -72,23 +141,19 @@ document.getElementById('btn-stop-rec').addEventListener('click', () => {
   clearInterval(RecordingState.transcriptInterval);
   RecordingState.isRecording = false;
 
-  // UI
   document.getElementById('btn-start-rec').classList.remove('recording');
-  document.getElementById('btn-start-label').textContent = 'Iniciar Gravação';
+  document.getElementById('btn-start-label').textContent = 'Iniciar gravação';
   document.getElementById('btn-start-rec').disabled = false;
   document.getElementById('btn-stop-rec').disabled = true;
   document.getElementById('rec-status').classList.add('hidden');
 
-  // Calculate duration
-  const durationSec = Math.floor((Date.now() - RecordingState.startTime) / 1000);
-  RecordingState.durationSec = durationSec;
+  RecordingState.durationSec = Math.floor((Date.now() - RecordingState.startTime) / 1000);
 
-  // Enable generate button if there's transcript
   if (RecordingState.transcriptLines.length > 0) {
     document.getElementById('btn-gerar').disabled = false;
   }
 
-  showToast('Gravação concluída! Gere o resumo clínico.');
+  showToast('Gravação concluída. Gere o prontuário quando estiver pronto.');
 });
 
 // ─── Timer ───
@@ -108,20 +173,19 @@ function appendTranscriptLine() {
   RecordingState.lineIndex++;
   RecordingState.transcriptLines.push(line);
 
+  appendSpeechDetectionsFromLine(line);
+
   const area = document.getElementById('transcript-area');
 
-  // Remove any existing cursor
   const existing = area.querySelector('.transcript-cursor');
   if (existing) existing.remove();
 
-  // Build line element
   const div = document.createElement('div');
   div.className = 'transcript-line anim-fade';
 
   const isPatient = line.speaker === 'Paciente';
   const speakerSpan = `<span class="transcript-speaker${isPatient ? ' patient' : ''}">${line.speaker}: </span>`;
 
-  // Typing effect
   div.innerHTML = speakerSpan + '<span class="transcript-text"></span><span class="transcript-cursor"></span>';
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
@@ -130,7 +194,7 @@ function appendTranscriptLine() {
   const cursor = div.querySelector('.transcript-cursor');
   let i = 0;
 
-  const speed = 28; // ms per character
+  const speed = 28;
   const typing = setInterval(() => {
     textEl.textContent = line.text.slice(0, i);
     i++;
@@ -141,7 +205,6 @@ function appendTranscriptLine() {
     area.scrollTop = area.scrollHeight;
   }, speed);
 
-  // Update badge
   const total = RecordingState.transcriptLines.length;
   document.getElementById('transcript-badge').textContent = `${total} fala${total > 1 ? 's' : ''}`;
 }
@@ -149,12 +212,11 @@ function appendTranscriptLine() {
 // ─── Generate summary button ───
 document.getElementById('btn-gerar').addEventListener('click', async () => {
   const patientName = document.getElementById('patient-name').value.trim();
-  const type        = document.getElementById('consult-type').value;
+  const type = document.getElementById('consult-type').value;
 
-  showLoading('Gerando resumo clínico com IA...');
+  showLoading('Gerando prontuário com IA…');
 
   try {
-    // Call Claude API via Anthropic
     const transcriptText = RecordingState.transcriptLines
       .map(l => `${l.speaker}: ${l.text}`)
       .join('\n');
@@ -165,7 +227,6 @@ document.getElementById('btn-gerar').addEventListener('click', async () => {
   } catch (err) {
     console.error('AI error, falling back to template:', err);
     hideLoading();
-    // Fallback to template
     const tmpl = getSummaryTemplate(type);
     displaySummary(tmpl, patientName, type);
   }
@@ -178,23 +239,33 @@ async function generateSummaryWithAI(patientName, consultType, transcript) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system: `Você é um assistente médico especializado em documentação clínica. 
-Gere resumos clínicos estruturados em português (Brasil) a partir de transcrições de consultas médicas.
-Responda APENAS com um objeto JSON válido, sem markdown, sem explicações adicionais.
-Estrutura exigida:
+      max_tokens: 1400,
+      system: `Você é um assistente médico especializado em documentação clínica no Brasil.
+Gere prontuário em português (Brasil) a partir da transcrição.
+Responda APENAS com JSON válido, sem markdown.
+Estrutura:
 {
   "queixa": "string",
   "historia": "string",
-  "avaliacao": "string",
-  "plano": "string com itens separados por \\n",
-  "patient_summary": "string curta explicando ao paciente o diagnóstico",
-  "recommendations": ["array de strings com recomendações ao paciente"]
-}`,
-      messages: [{
-        role: 'user',
-        content: `Paciente: ${patientName}\nTipo de consulta: ${consultType}\n\nTranscrição:\n${transcript}\n\nGere o resumo clínico estruturado.`
-      }]
+  "objetivo": "string (achados do exame físico / objetivo)",
+  "avaliacao": "string (diagnósticos ou hipóteses)",
+  "plano": "string com itens em linhas usando •",
+  "cids": [ { "code": "X00.0", "desc": "descrição CID-10" } ],
+  "documentos": [
+    { "tipo": "Receituário|Pedido de exames|Guia TISS", "nome": "string", "status": "pronto" }
+  ],
+  "retornoDias": number,
+  "retornoLabel": "ex: 7 dias",
+  "patient_summary": "string para o paciente",
+  "recommendations": ["string", "..."]
+}
+Use códigos CID-10 plausíveis. Inclua sempre receituário, pedido de exames quando aplicável, e guia TISS quando fizer sentido em consulta privada.`,
+      messages: [
+        {
+          role: 'user',
+          content: `Paciente: ${patientName}\nMotivo: ${consultType}\n\nTranscrição:\n${transcript}\n\nGere o prontuário completo.`
+        }
+      ]
     })
   });
 
@@ -203,5 +274,37 @@ Estrutura exigida:
   const data = await response.json();
   const raw = data.content.find(b => b.type === 'text')?.text || '';
   const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  const parsed = JSON.parse(clean);
+  const fallback = getSummaryTemplate(consultType);
+  const pick = k => {
+    const v = parsed[k];
+    return v != null && String(v).trim() !== '' ? v : fallback[k];
+  };
+  return {
+    ...fallback,
+    ...parsed,
+    queixa: pick('queixa'),
+    historia: pick('historia'),
+    objetivo: pick('objetivo'),
+    avaliacao: pick('avaliacao'),
+    plano: pick('plano'),
+    patient_summary: pick('patient_summary'),
+    recommendations:
+      Array.isArray(parsed.recommendations) && parsed.recommendations.length
+        ? parsed.recommendations
+        : fallback.recommendations,
+    cids: Array.isArray(parsed.cids) && parsed.cids.length ? parsed.cids : fallback.cids,
+    documentos:
+      Array.isArray(parsed.documentos) && parsed.documentos.length
+        ? parsed.documentos
+        : fallback.documentos,
+    retornoDias:
+      typeof parsed.retornoDias === 'number' && !Number.isNaN(parsed.retornoDias)
+        ? parsed.retornoDias
+        : fallback.retornoDias,
+    retornoLabel:
+      parsed.retornoLabel && String(parsed.retornoLabel).trim()
+        ? parsed.retornoLabel
+        : fallback.retornoLabel
+  };
 }

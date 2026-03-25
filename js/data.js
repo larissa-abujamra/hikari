@@ -207,8 +207,91 @@ const SUMMARY_TEMPLATES = {
   }
 };
 
+/** SOAP objetivo, CIDs, documentos e retorno (alinhado ao prontuário Hiro) */
+const SOAP_METADATA = {
+  'Dor abdominal': {
+    objetivo:
+      'PA: 118×76 mmHg. FC: 72 bpm. Abdome plano, dor leve à palpação epigástrica, sem descompressão brusca. BHF normoativos.',
+    cids: [
+      { code: 'K29.0', desc: 'Gastrite aguda' },
+      { code: 'K30', desc: 'Dispepsia' }
+    ],
+    documentos: [
+      { tipo: 'Receituário', nome: 'Omeprazol 20 mg + orientações dietéticas', status: 'pronto' },
+      { tipo: 'Pedido de exames', nome: 'Ultrassom abdominal total', status: 'pronto' },
+      { tipo: 'Guia TISS', nome: 'SP/SADT — consulta eletiva', status: 'pronto' }
+    ],
+    retornoDias: 7,
+    retornoLabel: '7 dias'
+  },
+  'Dor de cabeça': {
+    objetivo:
+      'PA: 122×78 mmHg. FC: 68 bpm. Nervos cranianos preservados. Pescoço com leve tensão paravertebral, sem rigidez de nuca.',
+    cids: [
+      { code: 'G44.2', desc: 'Cefaleia tensional' },
+      { code: 'G43.9', desc: 'Enxaqueca, não especificada' }
+    ],
+    documentos: [
+      { tipo: 'Receituário', nome: 'Amitriptilina 10 mg (noturno)', status: 'pronto' },
+      { tipo: 'Pedido de exames', nome: 'Avaliação oftalmológica (encaminhamento)', status: 'pronto' },
+      { tipo: 'Guia TISS', nome: 'SP/SADT — consulta', status: 'pronto' }
+    ],
+    retornoDias: 21,
+    retornoLabel: '21 dias'
+  },
+  'Dor lombar': {
+    objetivo:
+      'PA: 116×74 mmHg. Marcha preservada. Lombar com dor à palpação de paraspinais L4-L5, sem déficit motor. Lasègue negativo bilateral.',
+    cids: [
+      { code: 'M54.5', desc: 'Lombalgia baixa' },
+      { code: 'M54.9', desc: 'Dorsalgia, não especificada' }
+    ],
+    documentos: [
+      { tipo: 'Receituário', nome: 'Anti-inflamatório + relaxante muscular', status: 'pronto' },
+      { tipo: 'Pedido de exames', nome: 'Ressonância lombossacra (se refratário)', status: 'pronto' },
+      { tipo: 'Guia TISS', nome: 'SP/SADT — consulta + sessões fisioterapia', status: 'pronto' }
+    ],
+    retornoDias: 30,
+    retornoLabel: '30 dias'
+  },
+  'Consulta de rotina': {
+    objetivo:
+      'PA: 124×82 mmHg. IMC dentro do esperado. ACV: bulhas rítmicas. AR: MVUD sem RA. Abdome plano, indolor.',
+    cids: [
+      { code: 'Z00.0', desc: 'Exame médico geral' },
+      { code: 'Z13.1', desc: 'Rastreamento de diabetes' }
+    ],
+    documentos: [
+      { tipo: 'Pedido de exames', nome: 'Hemograma, lipídios, glicemia, TSH, creatinina, ECG', status: 'pronto' },
+      { tipo: 'Guia TISS', nome: 'SP/SADT — check-up', status: 'pronto' }
+    ],
+    retornoDias: 30,
+    retornoLabel: '30 dias (com exames)'
+  },
+  default: {
+    objetivo:
+      'Exame físico geral sem achados de alarme. Estado geral preservado. Orientações registradas.',
+    cids: [{ code: 'Z00.8', desc: 'Outros exames gerais' }],
+    documentos: [
+      { tipo: 'Receituário', nome: 'Prescrição da consulta', status: 'pronto' },
+      { tipo: 'Pedido de exames', nome: 'Exames conforme avaliação clínica', status: 'pronto' },
+      { tipo: 'Guia TISS', nome: 'Guia de consulta ambulatorial', status: 'pronto' }
+    ],
+    retornoDias: 14,
+    retornoLabel: '14 dias'
+  }
+};
+
 function getSummaryTemplate(type) {
-  return SUMMARY_TEMPLATES[type] || SUMMARY_TEMPLATES.default;
+  const base = SUMMARY_TEMPLATES[type] || SUMMARY_TEMPLATES.default;
+  const meta = SOAP_METADATA[type] || SOAP_METADATA.default;
+  return { ...base, ...meta };
+}
+
+/** CID-10 sugeridos na lateral durante a gravação */
+function getSuggestedCidsForSession(type) {
+  const meta = SOAP_METADATA[type] || SOAP_METADATA.default;
+  return meta.cids || [];
 }
 
 function getDemoTranscript(type) {
