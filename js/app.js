@@ -6,7 +6,11 @@ const sections = {
     'patients':      'section-patients',
   };
   
-  function navTo(section) {
+  function navTo(section, skipReset) {
+    if (section === 'nova-consulta' && !skipReset) {
+      resetConsultation();
+    }
+
     // Update nav items
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.nav === section);
@@ -25,6 +29,10 @@ const sections = {
         }
       }
     });
+  }
+
+  function setCurrentPatientName(name) {
+    currentPatientName = name;
   }
   
   // ─── Login ───
@@ -52,6 +60,10 @@ const sections = {
       document.getElementById('sidebar-avatar').textContent = initials || 'MD';
       Store.doctor.name = name;
       Store.doctor.initials = initials;
+
+      if (typeof resetConsultationStartForm === 'function') {
+        resetConsultationStartForm();
+      }
     }, 900);
   });
   
@@ -69,50 +81,28 @@ const sections = {
     resetConsultation();
   }
   
-  // ─── Start consultation (from setup form) ───
-  document.getElementById('btn-go-record').addEventListener('click', () => {
-    const name = document.getElementById('patient-name').value.trim();
-    const type = document.getElementById('consult-type').value;
-  
-    if (!name) {
-      showToast('Informe o nome do paciente');
-      document.getElementById('patient-name').focus();
-      return;
-    }
-    if (!type) {
-      showToast('Selecione o tipo de consulta');
-      document.getElementById('consult-type').focus();
-      return;
-    }
-  
-    // Guarda paciente atual para navegação de perfil
-    currentPatientName = name;
+  // ─── Start consultation: handler em consultationStart.js (btn-go-record) ───
 
-    // Populate recording view
-    document.getElementById('rec-patient-name').textContent = name;
-    document.getElementById('rec-consult-type').textContent = type;
-    const initials = name.trim().split(' ').filter(w => w.length > 0).slice(0,2).map(w => w[0].toUpperCase()).join('');
-    document.getElementById('rec-patient-avatar').textContent = initials;
-  
-    // Show recording step
-    document.getElementById('step-setup').classList.add('hidden');
-    document.getElementById('step-recording').classList.remove('hidden');
-    document.getElementById('step-summary').classList.add('hidden');
-  });
-  
   // ─── Reset consultation ───
   function resetConsultation() {
     document.getElementById('step-setup').classList.remove('hidden');
     document.getElementById('step-recording').classList.add('hidden');
     document.getElementById('step-summary').classList.add('hidden');
-    document.getElementById('patient-name').value = '';
-    document.getElementById('consult-type').value = '';
+    if (typeof resetConsultationStartForm === 'function') {
+      resetConsultationStartForm();
+    } else {
+      const pn = document.getElementById('patient-name');
+      if (pn) pn.value = '';
+      const ct = document.getElementById('consult-type');
+      if (ct) ct.value = '';
+    }
     const anam = document.getElementById('anamnesis-context');
     if (anam) anam.value = '';
     document.getElementById('transcript-area').innerHTML = '<p class="transcript-placeholder" id="transcript-placeholder">Inicie a gravação para ver a transcrição em tempo real…</p>';
     document.getElementById('transcript-badge').textContent = '0 falas';
     document.getElementById('btn-gerar').disabled = true;
-    RecordingState.reset();
+    if (typeof RecordingState !== 'undefined') RecordingState.reset();
+    currentPatientName = '';
   }
 
   // ─── Patient profile link (from "Consulta em andamento") ───
@@ -129,9 +119,15 @@ const sections = {
 
     if (!name) {
       showToast('Preencha os dados e inicie a consulta para acessar o perfil do paciente.');
+      focusPatientSearchIfPresent();
       return;
     }
     openPatientProfile(name);
+  }
+
+  function focusPatientSearchIfPresent() {
+    const el = document.getElementById('patient-search');
+    if (el) el.focus();
   }
   
   // ─── Dashboard rendering ───
@@ -441,8 +437,7 @@ const sections = {
   function openConsultation(id) {
     const c = Store.getAll().find(x => x.id === id);
     if (!c) return;
-    // Navigate to summary view for this consultation
-    navTo('nova-consulta');
+    navTo('nova-consulta', true);
     showSummaryFromSaved(c);
   }
 

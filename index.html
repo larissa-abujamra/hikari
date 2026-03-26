@@ -92,27 +92,112 @@
   <!-- ─── SECTION: Nova Consulta ─── -->
   <main class="main active" id="section-nova-consulta">
 
-    <!-- Step 1: Setup -->
+    <!-- Step 1: /consulta/nova — seleção de paciente -->
     <div id="step-setup" class="anim-up">
-      <div class="section-header">
-        <p class="section-overline">Módulo de consulta</p>
-        <h2 class="section-title">Nova consulta</h2>
-        <p class="section-desc">Preencha os dados do paciente, o contexto de anamnese prévia e o motivo da visita para iniciar a gravação.</p>
-      </div>
+      <div class="consult-start-wrap">
+        <div class="section-header">
+          <p class="section-overline">Módulo de consulta</p>
+          <h2 class="section-title">Nova consulta</h2>
+          <p class="section-desc consult-start-sub">Selecione ou cadastre o paciente para iniciar.</p>
+        </div>
 
-      <div class="card" style="margin-bottom:1.25rem">
-        <div class="card-body setup-form">
-          <div class="field" style="margin-bottom:0">
-            <label>Nome do paciente</label>
-            <input type="text" class="input" id="patient-name" placeholder="Ex: Maria Silva" />
+        <input type="hidden" id="patient-name" value="" />
+
+        <div class="patient-type-grid">
+          <button type="button" class="patient-type-card" id="card-type-existing" aria-pressed="false">
+            <span class="patient-type-card__icon" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M4 4h7v4H4z"/></svg>
+            </span>
+            <span class="patient-type-card__title">Paciente existente</span>
+            <span class="patient-type-card__desc">Busque pelo nome e carregue o histórico automaticamente</span>
+          </button>
+          <button type="button" class="patient-type-card" id="card-type-new" aria-pressed="false">
+            <span class="patient-type-card__icon" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            </span>
+            <span class="patient-type-card__title">Novo paciente</span>
+            <span class="patient-type-card__desc">Cadastre rapidamente e inicie a consulta</span>
+          </button>
+        </div>
+
+        <!-- Bloco 2A: existente -->
+        <div id="panel-existing" class="hidden patient-panel-block">
+          <p class="overline-label" style="margin-bottom:0.75rem">Paciente existente</p>
+          <div class="field patient-search-wrap">
+            <label>Buscar paciente</label>
+            <input type="text" class="input" id="patient-search" autocomplete="off" placeholder="Digite o nome do paciente..." />
+            <div id="patient-search-results" class="patient-search-results hidden" role="listbox"></div>
           </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Tipo / motivo da consulta</label>
+
+          <div id="context-loaded-card" class="context-loaded-card hidden">
+            <div class="context-loaded-card__head">
+              <span class="context-loaded-card__overline">Contexto carregado</span>
+              <button type="button" class="context-loaded-card__toggle" id="context-toggle">Ocultar contexto</button>
+            </div>
+            <div id="context-loaded-body" class="context-loaded-card__body"></div>
+          </div>
+
+          <div class="field" style="margin-top:1rem">
+            <label>Contexto adicional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted-lt)">(opcional)</span></label>
+            <textarea class="input" id="anamnesis-context" rows="3" placeholder="Notas livres além do histórico carregado…"></textarea>
+          </div>
+        </div>
+
+        <!-- Bloco 2B: novo -->
+        <div id="panel-new" class="hidden patient-panel-block">
+          <p class="overline-label" style="margin-bottom:0.75rem">Novo paciente</p>
+          <div class="field">
+            <label>Nome completo</label>
+            <input type="text" class="input" id="new-patient-name" placeholder="Nome e sobrenome" />
+          </div>
+          <div class="field-row">
+            <div class="field" style="flex:1">
+              <label>Data de nascimento</label>
+              <input type="date" class="input" id="new-patient-birth" />
+            </div>
+            <div class="field" style="flex:1">
+              <label>Sexo</label>
+              <select class="input" id="new-patient-sex">
+                <option value="">Selecione</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="O">Outro</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="button" class="btn-details-toggle" id="details-additional-toggle" aria-expanded="false">Dados adicionais (opcional) ▾</button>
+          <div id="details-additional-panel" class="details-additional-panel hidden">
+            <div class="field-row">
+              <div class="field" style="flex:1">
+                <label>Altura (cm)</label>
+                <input type="number" class="input" id="new-patient-height" min="40" max="250" placeholder="Ex: 165" />
+              </div>
+              <div class="field" style="flex:1">
+                <label>Peso (kg)</label>
+                <input type="number" class="input" id="new-patient-weight" min="1" max="350" step="0.1" placeholder="Ex: 69.5" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Telefone</label>
+              <input type="tel" class="input" id="new-patient-phone" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>Condição principal conhecida</label>
+              <input type="text" class="input" id="new-patient-condition" placeholder="Ex: hipertensão, DM2…" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco 3: motivo (após escolher tipo de paciente) -->
+        <div id="block-motivo" class="hidden patient-panel-block">
+          <p class="overline-label" style="margin-bottom:0.75rem">Motivo da consulta</p>
+          <div class="field">
+            <label>Motivo</label>
             <select class="input" id="consult-type">
               <option value="">Selecione o motivo</option>
               <option>Dor abdominal</option>
               <option>Dor lombar</option>
-              <option>Dor de cabeça</option>
               <option>Pressão alta</option>
               <option>Diabetes</option>
               <option>Consulta de rotina</option>
@@ -122,14 +207,14 @@
             </select>
           </div>
           <div class="field" style="margin-bottom:0">
-            <label>Contexto de anamnese prévia <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted-lt)">(opcional)</span></label>
-            <textarea class="input" id="anamnesis-context" rows="4" placeholder="Ex: hipertensão controlada, alergia a dipirona, última consulta há 6 meses…"></textarea>
+            <label>Detalhes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted-lt)">(opcional)</span></label>
+            <textarea class="input" id="motivo-detalhe" rows="3" placeholder="Detalhe o motivo se necessário"></textarea>
           </div>
-          <button class="btn btn-primary btn-lg btn-full" id="btn-go-record" style="margin-top:.25rem">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
-            Iniciar consulta
-          </button>
         </div>
+
+        <button type="button" class="btn btn-primary btn-lg btn-full" id="btn-go-record" style="margin-top:1.25rem" disabled>
+          Iniciar consulta
+        </button>
       </div>
     </div>
 
@@ -392,7 +477,9 @@
 <!-- Toast -->
 <div id="toast"></div>
 
+<script src="js/mockPatients.js"></script>
 <script src="js/data.js"></script>
+<script src="js/consultationStart.js"></script>
 <script src="js/app.js"></script>
 <script src="js/recording.js"></script>
 <script src="js/summary.js"></script>
