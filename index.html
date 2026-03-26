@@ -220,90 +220,98 @@
 
     <!-- Step 2: Recording -->
     <div id="step-recording" class="hidden anim-up">
-      <div class="section-header">
-        <p class="section-overline">Transcrição em tempo real</p>
-        <h2 class="section-title">Consulta em andamento</h2>
-        <p class="section-desc">Grave o atendimento; a Hiro sugere CID-10 e destaca achados na fala.</p>
-      </div>
-
-      <!-- Patient header (destaque) -->
-      <div class="patient-header-card card card--featured">
-        <div class="avatar" id="rec-patient-avatar">PT</div>
-        <div>
-          <div class="patient-header-name" id="rec-patient-name">Paciente em atendimento</div>
-          <div class="patient-header-sub" id="rec-consult-type">Motivo da consulta</div>
-        </div>
-        <a href="#" class="patient-profile-link" id="patient-profile-link" onclick="openPatientProfileFromHeader(event)">
-          Acessar perfil
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-        </a>
-      </div>
-
-      <div class="card" style="margin-bottom:1.25rem">
-        <div class="card-body" style="padding-bottom:0">
-          <p class="overline-label" style="margin-bottom:1rem">Gravação</p>
-        </div>
-        <div class="rec-buttons" style="padding-top:0">
-          <button class="btn-record btn-record-start" id="btn-start-rec">
-            <div class="rec-icon"><div class="rec-dot"></div></div>
-            <span id="btn-start-label">Iniciar gravação</span>
-          </button>
-          <button class="btn-record btn-record-stop" id="btn-stop-rec" disabled>
-            <div class="rec-icon"><div class="stop-sq"></div></div>
-            Parar gravação
-          </button>
-        </div>
-
-        <div class="rec-status hidden" id="rec-status">
-          <div class="rec-dot-blink"></div>
-          <span>Gravando —</span>
-          <span class="rec-timer-val" id="rec-timer">00:00</span>
-        </div>
-      </div>
-
-      <div class="consult-record-grid">
-        <div class="card">
-          <div class="card-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            <div>
-              <p class="overline-label" style="margin-bottom:0.15rem">Transcrição</p>
-              <h3 style="font-size:1.05rem">Fala em tempo real</h3>
+      <div class="consult-live-grid">
+        <div class="consult-live-main">
+          <div class="card patient-compact-card">
+            <div class="patient-compact-avatar" id="rec-patient-avatar">PT</div>
+            <div class="patient-compact-body">
+              <div class="patient-compact-name-row">
+                <span class="patient-compact-name" id="rec-patient-name">Paciente em atendimento</span>
+                <span class="patient-compact-age" id="rec-patient-age">—</span>
+              </div>
+              <div class="patient-compact-sub" id="rec-consult-type">Motivo da consulta</div>
+            </div>
+            <div class="patient-compact-meta">
+              <span class="patient-prev-badge hidden" id="rec-prev-badge">0 consultas anteriores</span>
+              <a href="#" class="patient-profile-link" id="patient-profile-link-live" onclick="openPatientProfileFromHeader(event)">Ver perfil completo</a>
             </div>
           </div>
-          <div class="card-body" style="padding-top:1rem;padding-bottom:.5rem">
-            <div class="transcript-area" id="transcript-area">
-              <p class="transcript-placeholder" id="transcript-placeholder">
-                Inicie a gravação para ver a transcrição em tempo real…
-              </p>
-            </div>
-          </div>
-          <div class="transcript-footer">
-            <span class="badge badge-gray" id="transcript-badge">0 falas</span>
-            <button class="btn-gerar" id="btn-gerar" disabled>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/></svg>
-              Gerar prontuário
+
+          <div class="record-center-zone card">
+            <button type="button" class="record-circle idle" id="btn-start-rec" aria-label="Controle de gravação">
+              <span class="record-circle-icon" id="record-circle-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </span>
+              <span class="record-pulse-ring"></span>
             </button>
+
+            <div class="waveform hidden" id="record-waveform" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="rec-timer-live" id="rec-timer">00:00</div>
+            <p class="rec-live-label" id="btn-start-label">Toque para iniciar a gravação</p>
+
+            <button type="button" class="btn btn-secondary hidden" id="btn-pause-rec">Pausar</button>
+          </div>
+
+          <div class="card transcript-panel-live">
+            <div class="card-header">
+              <div>
+                <p class="overline-label" style="margin-bottom:0.15rem">Transcrição</p>
+                <h3 style="font-size:1.05rem">Em tempo real</h3>
+              </div>
+            </div>
+            <div class="card-body" style="padding-top:1rem;padding-bottom:.5rem">
+              <div class="speech-banner hidden" id="speech-banner-warning">
+                Reconhecimento de voz não suportado neste navegador. Use Chrome ou Edge.
+              </div>
+              <div class="transcript-area" id="transcript-area">
+                <p class="transcript-placeholder" id="transcript-placeholder">
+                  Inicie a gravação para ver a transcrição...
+                </p>
+              </div>
+            </div>
+            <div class="transcript-footer">
+              <span class="transcript-word-counter" id="transcript-badge">0 palavras transcritas</span>
+            </div>
           </div>
         </div>
 
-        <div class="record-side-stack">
-          <div class="card card--featured">
+        <aside class="consult-live-side">
+          <div class="card hidden" id="cid-suggestions-card">
             <div class="card-body">
               <p class="overline-label">CID-10 sugerido</p>
-              <ul class="cid-panel-list" id="cid-suggested-panel">
-                <li class="cid-panel-item" style="opacity:.75;font-size:13px">Inicie a gravação para ver sugestões contextuais.</li>
-              </ul>
+              <div id="cid-suggested-panel"></div>
+              <div class="field" style="margin-top:.85rem;margin-bottom:0">
+                <input type="text" class="input cid-search-input" id="cid-search-input" placeholder="Buscar outro CID..." />
+              </div>
+              <div id="cid-search-results" class="cid-search-results hidden"></div>
             </div>
           </div>
+
           <div class="card">
             <div class="card-body">
-              <p class="overline-label">Detecções na fala</p>
-              <ul class="speech-detections" id="speech-detections">
-                <li style="color:var(--text-secondary);font-size:13px">Alergias, medicamentos e sintomas citados aparecerão aqui.</li>
+              <p class="overline-label">Detectado na fala</p>
+              <ul class="speech-detections-live" id="speech-detections">
+                <li class="speech-detection-empty">Nenhuma detecção ainda...</li>
               </ul>
             </div>
           </div>
-        </div>
+
+          <div class="card hidden" id="live-context-card">
+            <div class="card-body">
+              <button type="button" class="context-loaded-card__toggle" id="live-context-toggle">Ocultar contexto</button>
+              <p class="overline-label" style="margin-top:.35rem">Contexto do paciente</p>
+              <div id="live-context-body" class="context-loaded-card__body"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="consult-live-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-consult">Cancelar consulta</button>
+        <button type="button" class="btn btn-primary" id="btn-stop-generate" disabled>Parar e gerar prontuário</button>
       </div>
     </div>
 
@@ -478,6 +486,7 @@
 <div id="toast"></div>
 
 <script src="js/mockPatients.js"></script>
+<script src="js/consultLiveState.js"></script>
 <script src="js/data.js"></script>
 <script src="js/consultationStart.js"></script>
 <script src="js/app.js"></script>

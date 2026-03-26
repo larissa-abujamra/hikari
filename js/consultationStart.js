@@ -317,14 +317,18 @@ function initConsultationStart() {
       const id = 'c-' + Date.now();
       ConsultSession.activeId = id;
       consultStartSetHash('/consulta/' + id);
+      if (typeof ConsultLiveState !== 'undefined') {
+        ConsultLiveState.consultId = id;
+      }
 
       if (typeof setCurrentPatientName === 'function') {
         setCurrentPatientName(hiddenName.value.trim());
       }
 
-      document.getElementById('rec-patient-name').textContent = hiddenName.value.trim();
+      const fullName = hiddenName.value.trim();
+      document.getElementById('rec-patient-name').textContent = fullName;
       document.getElementById('rec-consult-type').textContent = displayReason;
-      const initials = hiddenName.value
+      const initials = fullName
         .trim()
         .split(' ')
         .filter(w => w.length > 0)
@@ -332,6 +336,63 @@ function initConsultationStart() {
         .map(w => w[0].toUpperCase())
         .join('');
       document.getElementById('rec-patient-avatar').textContent = initials || 'PT';
+      const recAge = document.getElementById('rec-patient-age');
+      const recPrevBadge = document.getElementById('rec-prev-badge');
+      const liveContextCard = document.getElementById('live-context-card');
+      const liveContextBody = document.getElementById('live-context-body');
+      const profileLink = document.getElementById('patient-profile-link-live');
+
+      let selectedProfile = null;
+      let selectedId = 'new-' + Date.now();
+      let ageYears = null;
+      let previousConsults = 0;
+
+      if (ConsultSession.patientMode === 'existing' && ConsultSession.selectedExisting) {
+        selectedProfile = ConsultSession.selectedExisting;
+        selectedId = selectedProfile.id;
+        ageYears = mockPatientAgeYears(selectedProfile.birthDate);
+        previousConsults = Math.max(1, Store.getByPatient(selectedProfile.nome).length || 0);
+        if (liveContextCard && liveContextBody) {
+          liveContextCard.classList.remove('hidden');
+          const m = selectedProfile.metricas || {};
+          liveContextBody.innerHTML = `
+            <p><strong>Última consulta:</strong> ${escapeHtml(mockFormatLastConsultLabel(selectedProfile))} — ${escapeHtml(selectedProfile.lastConsultReason || '—')}</p>
+            <p><strong>PA:</strong> ${escapeHtml(m.pa || '—')}</p>
+            <p><strong>Peso:</strong> ${m.peso != null ? escapeHtml(String(m.peso) + ' kg') : '—'}</p>
+            <p><strong>Medicamentos:</strong> ${escapeHtml((selectedProfile.medicamentos || []).join(' · ') || '—')}</p>
+            <p><strong>CIDs anteriores:</strong> ${escapeHtml((selectedProfile.cidsAnteriores || []).join(' · ') || '—')}</p>
+          `;
+        }
+      } else {
+        const birth = document.getElementById('new-patient-birth')?.value;
+        ageYears = birth ? mockPatientAgeYears(birth) : null;
+        if (liveContextCard) liveContextCard.classList.add('hidden');
+      }
+
+      if (recAge) recAge.textContent = ageYears != null ? `${ageYears} anos` : '';
+      if (recPrevBadge) {
+        if (previousConsults > 0) {
+          recPrevBadge.textContent = `${previousConsults} consultas anteriores`;
+          recPrevBadge.classList.remove('hidden');
+        } else {
+          recPrevBadge.classList.add('hidden');
+        }
+      }
+      if (profileLink) {
+        profileLink.setAttribute('href', `#/pacientes/${selectedId}`);
+      }
+
+      if (typeof ConsultLiveState !== 'undefined') {
+        ConsultLiveState.patientId = selectedId;
+        ConsultLiveState.patientData = {
+          id: selectedId,
+          name: fullName,
+          mode: ConsultSession.patientMode,
+          reason: displayReason,
+          ageYears: ageYears,
+          profile: selectedProfile
+        };
+      }
 
       document.getElementById('step-setup').classList.add('hidden');
       document.getElementById('step-recording').classList.remove('hidden');
@@ -357,6 +418,8 @@ function resetConsultationStartForm() {
   const cardNew = document.getElementById('card-type-new');
   if (cardExisting) cardExisting.classList.remove('patient-type-card--selected');
   if (cardNew) cardNew.classList.remove('patient-type-card--selected');
+  if (cardExisting) cardExisting.setAttribute('aria-pressed', 'false');
+  if (cardNew) cardNew.setAttribute('aria-pressed', 'false');
 
   const panelExisting = document.getElementById('panel-existing');
   const panelNew = document.getElementById('panel-new');

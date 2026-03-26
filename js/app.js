@@ -99,9 +99,15 @@ const sections = {
     const anam = document.getElementById('anamnesis-context');
     if (anam) anam.value = '';
     document.getElementById('transcript-area').innerHTML = '<p class="transcript-placeholder" id="transcript-placeholder">Inicie a gravação para ver a transcrição em tempo real…</p>';
-    document.getElementById('transcript-badge').textContent = '0 falas';
-    document.getElementById('btn-gerar').disabled = true;
+    document.getElementById('transcript-badge').textContent = '0 palavras transcritas';
+    const btnStopGenerate = document.getElementById('btn-stop-generate');
+    if (btnStopGenerate) btnStopGenerate.disabled = true;
+    const recAge = document.getElementById('rec-patient-age');
+    if (recAge) recAge.textContent = '';
+    const prevBadge = document.getElementById('rec-prev-badge');
+    if (prevBadge) prevBadge.classList.add('hidden');
     if (typeof RecordingState !== 'undefined') RecordingState.reset();
+    if (typeof resetConsultLiveState === 'function') resetConsultLiveState();
     currentPatientName = '';
   }
 
